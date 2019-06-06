@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.util.Log
 import android.widget.Toast
+import com.felix.placebook.adapter.BookmarkInfoWindowAdapter
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.location.*
 
@@ -63,6 +64,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         mMap.setOnPoiClickListener {
             displayPoi(it)
         }
+        mMap.setInfoWindowAdapter(BookmarkInfoWindowAdapter(this))
     }
 
     private fun setupPlacesClient() {
@@ -184,15 +186,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun displayPoiDisplayStep(place: Place, photo: Bitmap?) {
-        val iconPhoto = if (photo == null) {
-            BitmapDescriptorFactory.defaultMarker()
-        } else {
-            BitmapDescriptorFactory.fromBitmap(photo)
-        }
-
         mMap.addMarker(MarkerOptions()
             .position(place.latLng as LatLng)
-            .icon(iconPhoto)
             .title(place.name)
             .snippet(place.phoneNumber)
         )
