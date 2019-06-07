@@ -1,6 +1,7 @@
 package com.felix.placebook.ui
 
 import android.Manifest
+import android.arch.lifecycle.ViewModelProviders
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.support.v7.app.AppCompatActivity
@@ -9,6 +10,7 @@ import android.support.v4.app.ActivityCompat
 import android.util.Log
 import com.felix.placebook.R
 import com.felix.placebook.adapter.BookmarkInfoWindowAdapter
+import com.felix.placebook.viewmodel.MapsViewModel
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.location.*
 
@@ -29,6 +31,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mMap: GoogleMap
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var placesClient: PlacesClient
+    private lateinit var mapsViewModel: MapsViewModel
 
     companion object {
         private const val REQUEST_LOCATION = 1
@@ -58,11 +61,19 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
      */
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
+        setupMapListeners()
+        setupViewModel()
         getCurrentLocation()
+    }
+
+    private fun setupMapListeners() {
+        mMap.setInfoWindowAdapter(BookmarkInfoWindowAdapter(this))
         mMap.setOnPoiClickListener {
             displayPoi(it)
         }
-        mMap.setInfoWindowAdapter(BookmarkInfoWindowAdapter(this))
+        mMap.setOnInfoWindowClickListener {
+            handleInfoWindowClick(it)
+        }
     }
 
     private fun setupPlacesClient() {
@@ -189,6 +200,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             .title(place.name)
             .snippet(place.phoneNumber)
         )
-        marker?.tag = photo
+        marker?.tag = PlaceInfo(place, photo)
     }
+
+    private fun setupViewModel() {
+        mapsViewModel = ViewModelProviders.of(this).get(MapsViewModel::class.java)
+    }
+
+    private fun handleInfoWindowClick(marker: Marker) {
+        val placeInfo = (marker.tag as PlaceInfo)
+        if (placeInfo.place != null) {
+            mapsViewModel.addBookmarkFromPlace(placeInfo.place, placeInfo.image)
+        }
+        marker.remove()
+    }
+
+    class PlaceInfo(val place: Place? = null, val  image: Bitmap? = null)
 }
