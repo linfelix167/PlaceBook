@@ -1,14 +1,13 @@
-package com.felix.placebook
+package com.felix.placebook.ui
 
 import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.util.Log
-import android.widget.Toast
+import com.felix.placebook.R
 import com.felix.placebook.adapter.BookmarkInfoWindowAdapter
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.location.*
@@ -24,7 +23,6 @@ import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.api.net.FetchPhotoRequest
 import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.net.PlacesClient
-import kotlinx.android.synthetic.main.activity_maps.*
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
