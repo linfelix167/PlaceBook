@@ -1,7 +1,9 @@
 package com.felix.placebook.adapter
 
 import android.app.Activity
+import android.graphics.Bitmap
 import android.view.View
+import android.widget.ImageView
 import android.widget.TextView
 import com.felix.placebook.R
 import com.google.android.gms.maps.GoogleMap
@@ -21,6 +23,9 @@ class BookmarkInfoWindowAdapter(context: Activity) : GoogleMap.InfoWindowAdapter
 
         val phoneView = contents.findViewById<TextView>(R.id.phone)
         phoneView.text = marker.snippet ?: ""
+
+        val imageView = contents.findViewById<ImageView>(R.id.photo)
+        imageView.setImageBitmap(marker.tag as Bitmap?)
 
         return contents
     }
