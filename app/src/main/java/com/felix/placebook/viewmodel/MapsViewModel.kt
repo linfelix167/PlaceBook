@@ -2,15 +2,20 @@ package com.felix.placebook.viewmodel
 
 import android.app.Application
 import android.arch.lifecycle.AndroidViewModel
+import android.arch.lifecycle.LiveData
+import android.arch.lifecycle.Transformations
 import android.graphics.Bitmap
 import android.util.Log
+import com.felix.placebook.model.Bookmark
 import com.felix.placebook.repository.BookmarkRepo
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.model.Place
 
 class MapsViewModel(application: Application) : AndroidViewModel(application) {
 
     private val TAG = "MapsViewModel"
 
+    private var bookmarks: LiveData<List<BookmarkMarkerView>>? = null
     private var bookmarkRepo: BookmarkRepo = BookmarkRepo(
         getApplication()
     )
@@ -28,4 +33,31 @@ class MapsViewModel(application: Application) : AndroidViewModel(application) {
 
         Log.i(TAG, "New bookmark $newId added to the database.")
     }
+
+    private fun bookmarkToMarkerView(bookmark: Bookmark): MapsViewModel.BookmarkMarkerView {
+        return MapsViewModel.BookmarkMarkerView(
+            bookmark.id,
+            LatLng(bookmark.latitude, bookmark.longitude)
+        )
+    }
+
+    private fun mapBookmarksToMarkerView() {
+        bookmarks = Transformations.map(bookmarkRepo.allBookmarks) { repoBookmarks ->
+            repoBookmarks.map { bookmark ->
+                bookmarkToMarkerView(bookmark)
+            }
+        }
+    }
+
+    fun getBookmarkMarkerViews(): LiveData<List<BookmarkMarkerView>>? {
+        if (bookmarks == null) {
+            mapBookmarksToMarkerView()
+        }
+        return bookmarks
+    }
+
+    data class BookmarkMarkerView(
+        var id: Long? = null,
+        var location: LatLng = LatLng(0.0, 0.0)
+    )
 }

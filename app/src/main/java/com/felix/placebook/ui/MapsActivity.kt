@@ -10,6 +10,7 @@ import android.support.v4.app.ActivityCompat
 import android.util.Log
 import com.felix.placebook.R
 import com.felix.placebook.adapter.BookmarkInfoWindowAdapter
+import com.felix.placebook.model.Bookmark
 import com.felix.placebook.viewmodel.MapsViewModel
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.location.*
@@ -25,6 +26,8 @@ import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.api.net.FetchPhotoRequest
 import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.net.PlacesClient
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -205,14 +208,47 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun setupViewModel() {
         mapsViewModel = ViewModelProviders.of(this).get(MapsViewModel::class.java)
+        createBookmarkMarkerObserver()
     }
 
     private fun handleInfoWindowClick(marker: Marker) {
         val placeInfo = (marker.tag as PlaceInfo)
         if (placeInfo.place != null) {
-            mapsViewModel.addBookmarkFromPlace(placeInfo.place, placeInfo.image)
+            GlobalScope.launch {
+                mapsViewModel.addBookmarkFromPlace(placeInfo.place, placeInfo.image)
+            }
         }
         marker.remove()
+    }
+
+    private fun addPlaceMarker(bookmark: MapsViewModel.BookmarkMarkerView): Marker? {
+        val marker = mMap.addMarker(
+            MarkerOptions()
+                .position(bookmark.location)
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
+                .alpha(0.8f)
+        )
+        marker.tag = bookmark
+
+        return marker
+    }
+
+    private fun displayAllBookmarks(bookmarks: List<MapsViewModel.BookmarkMarkerView>) {
+        for (bookmark in bookmarks) {
+            addPlaceMarker(bookmark)
+        }
+    }
+
+    private fun createBookmarkMarkerObserver() {
+        mapsViewModel.getBookmarkMarkerViews()?.observe(
+            this, android.arch.lifecycle
+                .Observer<List<MapsViewModel.BookmarkMarkerView>> {
+                    mMap.clear()
+                    it?.let {
+                        displayAllBookmarks(it)
+                    }
+                }
+        )
     }
 
     class PlaceInfo(val place: Place? = null, val  image: Bitmap? = null)
