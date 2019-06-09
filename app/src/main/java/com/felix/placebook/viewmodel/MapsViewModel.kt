@@ -4,10 +4,12 @@ import android.app.Application
 import android.arch.lifecycle.AndroidViewModel
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.Transformations
+import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
 import com.felix.placebook.model.Bookmark
 import com.felix.placebook.repository.BookmarkRepo
+import com.felix.placebook.util.ImageUtils
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.libraries.places.api.model.Place
 
@@ -30,6 +32,9 @@ class MapsViewModel(application: Application) : AndroidViewModel(application) {
         bookmark.address = place.address.toString()
 
         val newId = bookmarkRepo.addBookmark(bookmark)
+        image?.let {
+            bookmark.setImage(it, getApplication())
+        }
 
         Log.i(TAG, "New bookmark $newId added to the database.")
     }
@@ -37,7 +42,9 @@ class MapsViewModel(application: Application) : AndroidViewModel(application) {
     private fun bookmarkToMarkerView(bookmark: Bookmark): MapsViewModel.BookmarkMarkerView {
         return MapsViewModel.BookmarkMarkerView(
             bookmark.id,
-            LatLng(bookmark.latitude, bookmark.longitude)
+            LatLng(bookmark.latitude, bookmark.longitude),
+            bookmark.name,
+            bookmark.phone
         )
     }
 
@@ -58,6 +65,16 @@ class MapsViewModel(application: Application) : AndroidViewModel(application) {
 
     data class BookmarkMarkerView(
         var id: Long? = null,
-        var location: LatLng = LatLng(0.0, 0.0)
-    )
+        var location: LatLng = LatLng(0.0, 0.0),
+        var name: String = "",
+        var phone: String = ""
+    ) {
+        fun getImage(context: Context): Bitmap? {
+            id?.let {
+                return ImageUtils.loadBitmapFromFile(context,
+                    Bookmark.generateImageFilename(it))
+            }
+            return null
+        }
+    }
 }
