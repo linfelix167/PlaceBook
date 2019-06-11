@@ -6,7 +6,7 @@ import android.arch.persistence.room.RoomDatabase
 import android.content.Context
 import com.felix.placebook.model.Bookmark
 
-@Database(entities = arrayOf(Bookmark::class), version = 1)
+@Database(entities = arrayOf(Bookmark::class), version = 2)
 abstract class PlaceBookDatabase : RoomDatabase() {
 
     abstract fun bookmarkDao(): BookmarkDao
@@ -21,7 +21,9 @@ abstract class PlaceBookDatabase : RoomDatabase() {
                     context.applicationContext,
                     PlaceBookDatabase::class.java,
                     "PlaceBook"
-                ).build()
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
             }
             return instance as PlaceBookDatabase
         }
