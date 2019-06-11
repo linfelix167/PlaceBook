@@ -9,6 +9,8 @@ import android.graphics.Bitmap
 import com.felix.placebook.model.Bookmark
 import com.felix.placebook.repository.BookmarkRepo
 import com.felix.placebook.util.ImageUtils
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 class BookmarkDetailsViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -32,11 +34,34 @@ class BookmarkDetailsViewModel(application: Application) : AndroidViewModel(appl
         }
     }
 
+    private fun bookmarkViewToBookmark(bookmarkView: BookmarkDetailsView): Bookmark? {
+        val bookmark = bookmarkView.id?.let {
+            bookmarkRepo.getBookmark(it)
+        }
+        if (bookmark != null) {
+            bookmark.id = bookmarkView.id
+            bookmark.name = bookmarkView.name
+            bookmark.phone = bookmarkView.phone
+            bookmark.address = bookmarkView.address
+            bookmark.notes = bookmarkView.notes
+        }
+        return bookmark
+    }
+
     fun getBookmark(bookmarkId: Long): LiveData<BookmarkDetailsView>? {
         if (bookmarkDetailsView == null) {
             mapBookmarkToBookmarkView(bookmarkId)
         }
         return bookmarkDetailsView
+    }
+
+    fun updateBookmark(bookmarkView: BookmarkDetailsView) {
+        GlobalScope.launch {
+            val bookmark = bookmarkViewToBookmark(bookmarkView)
+            bookmark?.let {
+                bookmarkRepo.updateBookmark(it)
+            }
+        }
     }
 
     data class BookmarkDetailsView(
