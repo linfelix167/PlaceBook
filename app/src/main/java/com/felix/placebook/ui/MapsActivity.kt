@@ -27,6 +27,7 @@ import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.api.net.FetchPhotoRequest
 import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.net.PlacesClient
+import kotlinx.android.synthetic.main.main_view_maps.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
@@ -50,7 +51,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
-
+        setupToolbar()
         setupLocationClient()
         setupPlacesClient()
     }
@@ -271,6 +272,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         val intent = Intent(this, BookmarkDetailsActivity::class.java)
         intent.putExtra(EXTRA_BOOKMARK_ID, bookmarkId)
         startActivity(intent)
+    }
+
+    private fun setupToolbar() {
+        setSupportActionBar(toolbar)
     }
 
     class PlaceInfo(val place: Place? = null, val  image: Bitmap? = null)
