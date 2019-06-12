@@ -2,18 +2,31 @@ package com.felix.placebook.ui
 
 import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModelProviders
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.support.v4.content.FileProvider
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.Toast
 import com.felix.placebook.R
+import com.felix.placebook.util.ImageUtils
 import com.felix.placebook.viewmodel.BookmarkDetailsViewModel
 import kotlinx.android.synthetic.main.activity_bookmark_detail.*
+import java.io.File
+import java.io.IOException
 
-class BookmarkDetailsActivity : AppCompatActivity() {
+class BookmarkDetailsActivity : AppCompatActivity(), PhotoOptionDialogFragment.PhotoOptionDialogListener {
 
     private lateinit var bookmarkDetailsViewModel: BookmarkDetailsViewModel
+
     private var bookmarkDetailsView: BookmarkDetailsViewModel.BookmarkDetailsView? = null
+    private var photoFile: File? = null
+
+    companion object {
+        private const val REQUEST_CAPTURE_IMAGE = 1
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,6 +60,9 @@ class BookmarkDetailsActivity : AppCompatActivity() {
                 imageViewPlace.setImageBitmap(placeImage)
             }
         }
+        imageViewPlace.setOnClickListener {
+            replaceImage()
+        }
     }
 
     private fun getIntentData() {
@@ -77,6 +93,11 @@ class BookmarkDetailsActivity : AppCompatActivity() {
         finish()
     }
 
+    private fun replaceImage() {
+        val newFragment = PhotoOptionDialogFragment.newInstance(this)
+        newFragment?.show(supportFragmentManager, "photoOptionDialog")
+    }
+
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         val inflater = menuInflater
         inflater.inflate(R.menu.menu_bookmerk_details, menu)
@@ -91,5 +112,32 @@ class BookmarkDetailsActivity : AppCompatActivity() {
             }
             else -> return super.onOptionsItemSelected(item)
         }
+    }
+
+    override fun onCaptureClick() {
+        photoFile = null
+        try {
+            photoFile = ImageUtils.createUniqueImageFile(this)
+        } catch (ex: IOException) {
+            return
+        }
+
+        photoFile?.let { photoFile ->
+            val photoUri = FileProvider.getUriForFile(this,
+                "com.felix.placebook.fileprovider",
+                photoFile)
+            val captureIntent = Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE)
+            captureIntent.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, photoUri)
+
+            val intentActivities = packageManager.queryIntentActivities(captureIntent, PackageManager.MATCH_DEFAULT_ONLY)
+            intentActivities.map { it.activityInfo.packageName }
+                .forEach { grantUriPermission(it, photoUri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION) }
+
+            startActivityForResult(captureIntent, REQUEST_CAPTURE_IMAGE)
+        }
+    }
+
+    override fun onPickClick() {
+        Toast.makeText(this, "Gallery Pick", Toast.LENGTH_SHORT).show()
     }
 }
