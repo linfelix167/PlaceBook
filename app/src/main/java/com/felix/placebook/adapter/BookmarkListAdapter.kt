@@ -31,7 +31,9 @@ class BookmarkListAdapter(
 
         holder.itemView.tag = bookmarkViewData
         holder.nameTextView.text = bookmarkViewData.name
-        holder.categoryImageView.setImageResource(R.drawable.ic_other)
+        bookmarkViewData.categoryResourceId?.let {
+            holder.categoryImageView.setImageResource(it)
+        }
     }
 
     fun setBookmarkData(bookmarks: List<MapsViewModel.BookmarkView>) {

@@ -30,6 +30,7 @@ class MapsViewModel(application: Application) : AndroidViewModel(application) {
         bookmark.latitude = place.latLng?.latitude ?: 0.0
         bookmark.phone = place.phoneNumber.toString()
         bookmark.address = place.address.toString()
+        bookmark.category = getPlaceCategory(place)
 
         val newId = bookmarkRepo.addBookmark(bookmark)
         image?.let {
@@ -39,12 +40,20 @@ class MapsViewModel(application: Application) : AndroidViewModel(application) {
         Log.i(TAG, "New bookmark $newId added to the database.")
     }
 
+    fun getBookmarkViews(): LiveData<List<BookmarkView>>? {
+        if (bookmarks == null) {
+            mapBookmarksToBookmarkView()
+        }
+        return bookmarks
+    }
+
     private fun bookmarkToBookmarkView(bookmark: Bookmark): MapsViewModel.BookmarkView {
-        return MapsViewModel.BookmarkView(
+        return BookmarkView(
             bookmark.id,
             LatLng(bookmark.latitude, bookmark.longitude),
             bookmark.name,
-            bookmark.phone
+            bookmark.phone,
+            bookmarkRepo.getCategoryResourceId(bookmark.category)
         )
     }
 
@@ -56,18 +65,27 @@ class MapsViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun getBookmarkViews(): LiveData<List<BookmarkView>>? {
-        if (bookmarks == null) {
-            mapBookmarksToBookmarkView()
+    private fun getPlaceCategory(place: Place): String {
+
+        var category = "Other"
+        val placeTypes = place.types
+
+        placeTypes?.let {
+            if (it.size > 0) {
+                val placeType = it[0]
+                category = bookmarkRepo.placeTypeToCategory(placeType)
+            }
         }
-        return bookmarks
+
+        return category
     }
 
     data class BookmarkView(
         var id: Long? = null,
         var location: LatLng = LatLng(0.0, 0.0),
         var name: String = "",
-        var phone: String = ""
+        var phone: String = "",
+        val categoryResourceId: Int? = null
     ) {
         fun getImage(context: Context): Bitmap? {
             id?.let {
