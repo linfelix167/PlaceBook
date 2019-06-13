@@ -4,6 +4,7 @@ import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModelProviders
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v4.content.FileProvider
@@ -98,6 +99,20 @@ class BookmarkDetailsActivity : AppCompatActivity(), PhotoOptionDialogFragment.P
         newFragment?.show(supportFragmentManager, "photoOptionDialog")
     }
 
+    private fun updateImage(image: Bitmap) {
+        val bookmarkView = bookmarkDetailsView ?: return
+        imageViewPlace.setImageBitmap(image)
+        bookmarkView.setImage(this, image)
+    }
+
+    private fun getImageWithPath(filePath: String): Bitmap? {
+        return ImageUtils.decodeFileToSize(
+            filePath,
+            resources.getDimensionPixelSize(R.dimen.default_image_width),
+            resources.getDimensionPixelSize(R.dimen.default_image_height)
+        )
+    }
+
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         val inflater = menuInflater
         inflater.inflate(R.menu.menu_bookmerk_details, menu)
@@ -139,5 +154,29 @@ class BookmarkDetailsActivity : AppCompatActivity(), PhotoOptionDialogFragment.P
 
     override fun onPickClick() {
         Toast.makeText(this, "Gallery Pick", Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (resultCode == android.app.Activity.RESULT_OK) {
+
+            when (resultCode) {
+                REQUEST_CAPTURE_IMAGE -> {
+                    val photoFile = photoFile ?: return
+
+                    val uri = FileProvider.getUriForFile(
+                        this,
+                        "com.felix.placebook.fileprovider",
+                        photoFile)
+                    revokeUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+
+                    val image = getImageWithPath(photoFile.absolutePath)
+                    image?.let {
+                        updateImage(it)
+                    }
+                }
+            }
+        }
     }
 }

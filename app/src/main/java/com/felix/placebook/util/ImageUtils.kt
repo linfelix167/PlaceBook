@@ -47,6 +47,20 @@ object ImageUtils {
         }
     }
 
+    private fun calculateInSampleSize(width: Int, height: Int, reqWidth: Int, reqHeight: Int): Int {
+        var inSampleSize = 1
+
+        if (height > reqHeight || width > reqWidth) {
+            val halfHeight = height / 2
+            val halfWidth = width / 2
+            while (halfHeight / inSampleSize >= reqHeight && halfWidth / inSampleSize >= reqWidth) {
+                inSampleSize *= 2
+            }
+        }
+
+        return inSampleSize
+    }
+
     fun loadBitmapFromFile(context: Context, filename: String): Bitmap? {
         val filePath = File(context.filesDir, filename).absolutePath
         return BitmapFactory.decodeFile(filePath)
@@ -55,8 +69,20 @@ object ImageUtils {
     @Throws(IOException::class)
     fun createUniqueImageFile(context: Context): File {
         val timeStamp = SimpleDateFormat("yyyyMMddHHmmss").format(Date())
-        val filename = "Placebook_" + timeStamp + "_"
+        val filename = "PlaceBook_" + timeStamp + "_"
         val filesDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
         return File.createTempFile(filename, ".jpg", filesDir)
+    }
+
+    fun decodeFileToSize(filePath: String, width: Int, height: Int): Bitmap {
+        val options = BitmapFactory.Options()
+        options.inJustDecodeBounds = true
+        BitmapFactory.decodeFile(filePath, options)
+
+        options.inSampleSize = calculateInSampleSize(options.outWidth, options.outHeight, width, height)
+
+        options.inJustDecodeBounds = false
+
+        return BitmapFactory.decodeFile(filePath, options)
     }
 }

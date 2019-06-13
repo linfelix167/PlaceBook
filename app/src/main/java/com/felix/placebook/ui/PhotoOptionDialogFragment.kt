@@ -18,6 +18,7 @@ class PhotoOptionDialogFragment : DialogFragment() {
     private lateinit var listener: PhotoOptionDialogListener
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+
         listener = activity as PhotoOptionDialogListener
 
         var captureSelectIdx = -1
@@ -57,13 +58,13 @@ class PhotoOptionDialogFragment : DialogFragment() {
             return (pickIntent.resolveActivity(context.packageManager) != null)
         }
 
-        fun canCapture(context: Context?) : Boolean {
+        fun canCapture(context: Context) : Boolean {
             val captureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-            return (captureIntent.resolveActivity(context!!.packageManager) != null)
+            return (captureIntent.resolveActivity(context.packageManager) != null)
         }
 
-        fun newInstance(context: Context?) : PhotoOptionDialogFragment? {
-            if (canPick(context!!) || canCapture(context)) {
+        fun newInstance(context: Context) : PhotoOptionDialogFragment? {
+            if (canPick(context) || canCapture(context)) {
                 val frag = PhotoOptionDialogFragment()
                 return frag
             } else {
