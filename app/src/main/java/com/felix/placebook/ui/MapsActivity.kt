@@ -1,6 +1,7 @@
 package com.felix.placebook.ui
 
 import android.Manifest
+import android.app.Activity
 import android.arch.lifecycle.ViewModelProviders
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -16,6 +17,8 @@ import com.felix.placebook.R
 import com.felix.placebook.adapter.BookmarkInfoWindowAdapter
 import com.felix.placebook.adapter.BookmarkListAdapter
 import com.felix.placebook.viewmodel.MapsViewModel
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException
+import com.google.android.gms.common.GooglePlayServicesRepairableException
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.location.*
 
@@ -27,9 +30,12 @@ import com.google.android.gms.maps.model.*
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.PhotoMetadata
 import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.api.model.RectangularBounds
 import com.google.android.libraries.places.api.net.FetchPhotoRequest
 import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.net.PlacesClient
+import com.google.android.libraries.places.widget.Autocomplete
+import com.google.android.libraries.places.widget.model.AutocompleteActivityMode
 import kotlinx.android.synthetic.main.activity_maps.*
 import kotlinx.android.synthetic.main.drawer_view_maps.*
 import kotlinx.android.synthetic.main.main_view_maps.*
@@ -50,6 +56,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         const val EXTRA_BOOKMARK_ID = "com.felix.placebook.EXTRA_BOOKMARK_ID"
         private const val REQUEST_LOCATION = 1
         private const val TAG = "MapsActivity"
+        private const val AUTOCOMPLETE_REQUEST_CODE = 2
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -79,6 +86,25 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         setupMapListeners()
         setupViewModel()
         getCurrentLocation()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+
+        when (requestCode) {
+            AUTOCOMPLETE_REQUEST_CODE ->
+
+                if (requestCode == Activity.RESULT_OK && data != null) {
+
+                    val place = Autocomplete.getPlaceFromIntent(data)
+
+                    val location = Location("")
+                    location.latitude = place.latLng?.latitude ?: 0.0
+                    location.longitude = place.latLng?.longitude ?: 0.0
+                    updateMapToLocation(location)
+
+                    displayPoiGetPhotoStep(place)
+                }
+        }
     }
 
     private fun setupMapListeners() {
@@ -306,6 +332,34 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private fun updateMapToLocation(location: Location) {
         val latLng = LatLng(location.latitude, location.longitude)
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 16.0f))
+    }
+
+    private fun searchAtCurrentLocation() {
+
+        val placeFields = listOf(
+            Place.Field.ID,
+            Place.Field.NAME,
+            Place.Field.PHONE_NUMBER,
+            Place.Field.PHOTO_METADATAS,
+            Place.Field.LAT_LNG,
+            Place.Field.ADDRESS,
+            Place.Field.TYPES
+        )
+
+        val bounds = RectangularBounds.newInstance(mMap.projection.visibleRegion.latLngBounds)
+        try {
+
+            val intent = Autocomplete.IntentBuilder(
+                AutocompleteActivityMode.OVERLAY, placeFields)
+                .setLocationBias(bounds)
+                .build(this)
+
+            startActivityForResult(intent, AUTOCOMPLETE_REQUEST_CODE)
+        } catch (e: GooglePlayServicesRepairableException) {
+            //TODO: Handle exception
+        } catch (e: GooglePlayServicesNotAvailableException) {
+            //TODO: Handle exception
+        }
     }
 
     fun moveToBookmark(bookmark: MapsViewModel.BookmarkView) {
