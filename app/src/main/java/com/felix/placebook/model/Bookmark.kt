@@ -4,6 +4,7 @@ import android.arch.persistence.room.Entity
 import android.arch.persistence.room.PrimaryKey
 import android.content.Context
 import android.graphics.Bitmap
+import com.felix.placebook.util.FileUtils
 import com.felix.placebook.util.ImageUtils
 
 @Entity
@@ -18,6 +19,7 @@ data class Bookmark(
     var notes: String = "",
     var category: String = ""
 ) {
+
     /**
      * Saving an image for a Bookmark
      */
@@ -27,6 +29,11 @@ data class Bookmark(
         }
     }
 
+    fun deleteImage(context: Context) {
+        id?.let {
+            FileUtils.deleteFile(context, generateImageFilename(it))
+        }
+    }
 
     companion object {
         fun generateImageFilename(id: Long): String {

@@ -9,7 +9,7 @@ import com.felix.placebook.model.Bookmark
 import com.google.android.libraries.places.api.model.Place
 import java.util.ArrayList
 
-class BookmarkRepo(context: Context) {
+class BookmarkRepo(private val context: Context) {
 
     private var db = PlaceBookDatabase.getInstance(context)
     private var bookmarkDao: BookmarkDao = db.bookmarkDao()
@@ -45,6 +45,11 @@ class BookmarkRepo(context: Context) {
 
     fun getBookmark(bookmarkId: Long): Bookmark {
         return bookmarkDao.loadBookmark(bookmarkId)
+    }
+
+    fun deleteBookmark(bookmark: Bookmark) {
+        bookmark.deleteImage(context)
+        bookmarkDao.deleteBookmark(bookmark)
     }
 
     fun placeTypeToCategory(placeType: Place.Type): String {

@@ -17,21 +17,26 @@ class BookmarkDetailsViewModel(application: Application) : AndroidViewModel(appl
     private var bookmarkRepo: BookmarkRepo = BookmarkRepo(getApplication())
     private var bookmarkDetailsView: LiveData<BookmarkDetailsView>? = null
 
-    private fun bookmartToBookmarkView(bookmark: Bookmark): BookmarkDetailsView {
+    private fun bookmarkToBookmarkView(bookmark: Bookmark): BookmarkDetailsView {
         return  BookmarkDetailsView(
             bookmark.id,
             bookmark.name,
             bookmark.phone,
             bookmark.address,
             bookmark.notes,
-            bookmark.category
+            bookmark.category,
+            bookmark.longitude,
+            bookmark.latitude,
+            bookmark.placeId
         )
     }
 
     private fun mapBookmarkToBookmarkView(bookmarkId: Long) {
         val bookmark = bookmarkRepo.getLiveBookmark(bookmarkId)
         bookmarkDetailsView = Transformations.map(bookmark) { repoBookmark ->
-            bookmartToBookmarkView(repoBookmark)
+            repoBookmark?.let {
+                bookmarkToBookmarkView(repoBookmark)
+            }
         }
     }
 
@@ -66,6 +71,17 @@ class BookmarkDetailsViewModel(application: Application) : AndroidViewModel(appl
         }
     }
 
+    fun deleteBookmark(bookmarkDetailsView: BookmarkDetailsView) {
+        GlobalScope.launch {
+            val bookmark = bookmarkDetailsView.id?.let {
+                bookmarkRepo.getBookmark(it)
+            }
+            bookmark?.let {
+                bookmarkRepo.deleteBookmark(it)
+            }
+        }
+    }
+
     fun getCategoryResourceId(category: String): Int? {
         return bookmarkRepo.getCategoryResourceId(category)
     }
@@ -80,7 +96,10 @@ class BookmarkDetailsViewModel(application: Application) : AndroidViewModel(appl
         var phone: String = "",
         var address: String = "",
         var notes: String = "",
-        var category: String = ""
+        var category: String = "",
+        var longitude: Double = 0.0,
+        var latitude: Double = 0.0,
+        var placeId: String? = null
     ) {
         fun getImage(context: Context): Bitmap? {
             id?.let {

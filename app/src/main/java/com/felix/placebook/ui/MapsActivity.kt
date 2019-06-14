@@ -13,6 +13,8 @@ import android.support.v4.app.ActivityCompat
 import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.widget.LinearLayoutManager
 import android.util.Log
+import android.view.WindowManager
+import android.widget.ProgressBar
 import com.felix.placebook.R
 import com.felix.placebook.adapter.BookmarkInfoWindowAdapter
 import com.felix.placebook.adapter.BookmarkListAdapter
@@ -66,8 +68,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
-        setupToolbar()
+
         setupLocationClient()
+        setupToolbar()
         setupPlacesClient()
         setupNavigationDrawer()
     }
@@ -101,6 +104,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     location.latitude = place.latLng?.latitude ?: 0.0
                     location.longitude = place.latLng?.longitude ?: 0.0
                     updateMapToLocation(location)
+                    showProgress()
 
                     displayPoiGetPhotoStep(place)
                 }
@@ -115,11 +119,36 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         mMap.setOnInfoWindowClickListener {
             handleInfoWindowClick(it)
         }
+        fab.setOnClickListener {
+            searchAtCurrentLocation()
+        }
+        mMap.setOnMapClickListener { latLng ->
+            newBookmark(latLng)
+        }
     }
 
     private fun setupPlacesClient() {
         Places.initialize(getApplicationContext(), "AIzaSyDYCLcbyLazUB8aFXjsmqSDYt-XAjYMV9w")
         placesClient = Places.createClient(this)
+    }
+
+    private fun disableUserInteraction() {
+        window.setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
+    }
+
+    private fun enableUserInteraction() {
+        window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
+    }
+
+    private fun showProgress() {
+        progressBar.visibility = ProgressBar.VISIBLE
+        disableUserInteraction()
+    }
+
+    private fun hideProgress() {
+        progressBar.visibility = ProgressBar.GONE
+        enableUserInteraction()
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -168,6 +197,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun displayPoi(pointOfInterest: PointOfInterest) {
+        showProgress()
         displayPoiGetPlaceStep(pointOfInterest)
     }
 
@@ -200,6 +230,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                                 exception.message + ", " +
                                 "statusCode: " + statusCode
                     )
+                    hideProgress()
                 }
             }
     }
@@ -232,10 +263,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                                 "statusCode: " + statusCode
                     )
                 }
+                hideProgress()
             }
     }
 
     private fun displayPoiDisplayStep(place: Place, photo: Bitmap?) {
+        hideProgress()
         val marker = mMap.addMarker(MarkerOptions()
             .position(place.latLng as LatLng)
             .title(place.name)
@@ -359,6 +392,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             //TODO: Handle exception
         } catch (e: GooglePlayServicesNotAvailableException) {
             //TODO: Handle exception
+        }
+    }
+
+    private fun newBookmark(latLng: LatLng) {
+        GlobalScope.launch {
+            val bookmarkId = mapsViewModel.addBookmark(latLng)
+            bookmarkId?.let {
+                startBookmarkDetails(it)
+            }
         }
     }
 
