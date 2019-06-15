@@ -23,10 +23,8 @@ import java.net.URLEncoder
 class BookmarkDetailsActivity : AppCompatActivity(),
     PhotoOptionDialogFragment.PhotoOptionDialogListener {
 
-    private lateinit var bookmarkDetailsViewModel:
-            BookmarkDetailsViewModel
-    private var bookmarkDetailsView:
-            BookmarkDetailsViewModel.BookmarkDetailsView? = null
+    private lateinit var bookmarkDetailsViewModel: BookmarkDetailsViewModel
+    private var bookmarkDetailsView: BookmarkDetailsViewModel.BookmarkDetailsView? = null
     private var photoFile: File? = null
 
     override fun onCaptureClick() {
